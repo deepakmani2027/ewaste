@@ -1,0 +1,26 @@
+.gradientScroll {
+  overflow-y: auto;
+}
+
+/* WebKit scrollbars (Chrome, Edge, Safari) */
+.gradientScroll::-webkit-scrollbar {
+  width: 12px;
+}
+.gradientScroll::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, rgba(16,185,129,0.12), rgba(13,148,136,0.12), rgba(147,51,234,0.12));
+  border-left: 1px solid hsl(240 5% 94%);
+}
+.gradientScroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgb(16,185,129), rgb(13,148,136), rgb(147,51,234));
+  border-radius: 999px;
+  border: 2px solid white;
+}
+.gradientScroll::-webkit-scrollbar-thumb:hover {
+  filter: brightness(0.95);
+}
+
+/* Firefox */
+.gradientScroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(16,185,129) transparent;
+}
