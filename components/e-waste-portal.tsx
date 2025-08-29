@@ -24,26 +24,41 @@ import type { EwItem, Vendor, Pickup } from "@/lib/types"
 import DashboardHeader from "./dashboard-header"
 import NamasteBanner from "./namaste-banner"
 
-const TAB_KEYS = ["items", "scheduling", "compliance", "campaigns", "analytics", "vendors"] as const
-type TabKey = (typeof TAB_KEYS)[number]
+const TAB_KEYS = ["items", "scheduling", "compliance", "campaigns", "analytics", "vendors"] as const;
+type TabKey = (typeof TAB_KEYS)[number];
 
 function isTabKey(k: string): k is TabKey {
-  return (TAB_KEYS as readonly string[]).includes(k)
-}
-function getHashKey(): TabKey | null {
-  const h = (typeof window !== "undefined" && window.location.hash.replace("#", "")) || ""
-  return isTabKey(h) ? (h as TabKey) : null
+  return (TAB_KEYS as readonly string[]).includes(k);
 }
 
+
 export default function EwastePortal() {
-  const [items, setItems] = useState<EwItem[]>([])
-  const [pickups, setPickups] = useState<Pickup[]>([])
-  const [vendors, setVendors] = useState<Vendor[]>([])
-  
-  const { user, isAuthenticated, loading } = useAuth()
+  const [items, setItems] = useState<EwItem[]>([]);
+  const [pickups, setPickups] = useState<Pickup[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+
+  const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const [tab, setTab] = useState<TabKey>(getHashKey() || "items")
-  const { ref: kpiRef, visibleItems: visibleKpis } = useStaggeredAnimation(4, 100)
+  const [tab, setTab] = useState<TabKey>("items"); // Always safe for SSR
+  const { ref: kpiRef, visibleItems: visibleKpis } = useStaggeredAnimation(4, 100);
+
+  // Set tab from hash on client only
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const h = window.location.hash.replace("#", "");
+      if (isTabKey(h)) setTab(h as TabKey);
+    }
+    function onTabChanged(e: any) {
+      const detail = e.detail;
+      if (detail?.activeTab && isTabKey(detail.activeTab)) {
+        setTab(detail.activeTab);
+      }
+    }
+    window.addEventListener("ew:tab-changed", onTabChanged as any);
+    return () => {
+      window.removeEventListener("ew:tab-changed", onTabChanged as any);
+    };
+  }, []);
 
   async function refreshData() {
     if (!user?.email) {
@@ -79,21 +94,6 @@ export default function EwastePortal() {
       refreshData();
     }
   }, [user, isAuthenticated, loading, router]);
-
-  useEffect(() => {
-    const onTabChanged = (e: Event) => {
-      const detail = (e as CustomEvent<{ activeTab: string }>).detail
-      if (detail?.activeTab && isTabKey(detail.activeTab)) {
-        setTab(detail.activeTab)
-      }
-    }
-    window.addEventListener("ew:tab-changed", onTabChanged as any)
-    const k = getHashKey()
-    if (k) setTab(k)
-    return () => {
-      window.removeEventListener("ew:tab-changed", onTabChanged as any)
-    }
-  }, [])
 
  async function updateItem(updated: EwItem) { 
     if (!user?.email) return;
@@ -157,16 +157,16 @@ export default function EwastePortal() {
       byMonth[key] = (byMonth[key] || 0) + 1
       byCategory[i.category] = (byCategory[i.category] || 0) + 1
       if (i.classification) {
-        classificationCount[i.classification.type] = (classificationCount[i.classification.type] || 0) + 1
+        classificationCount[i.classification.type] = (classificationCount[i.classification.type] || 0) + 1;
       }
-
-  if (i.classification?.type !== 'Hazardous' && i.status !== 'Disposed' && i.status !== 'Decomposed') {
-        const weight = weightMap[i.category] ?? 1
-        const fullImpact = weight * emissionFactorPerKg
-        potentialImpact += fullImpact
-        const mult = progressMultiplier[i.status] ?? 0
-        avoidedImpact += fullImpact * mult
-        if (i.status === 'Recycled') recycledCount++
+      // Only check for valid EwStatus values
+      if (i.classification?.type !== 'Hazardous' && i.status !== 'Disposed') {
+        const weight = weightMap[i.category] ?? 1;
+        const fullImpact = weight * emissionFactorPerKg;
+        potentialImpact += fullImpact;
+        const mult = progressMultiplier[i.status] ?? 0;
+        avoidedImpact += fullImpact * mult;
+        if (i.status === 'Recycled') recycledCount++;
       }
     })
 
