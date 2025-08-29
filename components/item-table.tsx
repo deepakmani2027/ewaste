@@ -123,37 +123,28 @@ export default function ItemTable({
 
   // 🔔 Listen for bid updates from VendorItemsPage (BroadcastChannel or window event)
   useEffect(() => {
+    if (typeof window === 'undefined') return; // Ensure this effect only runs on the client
+
     let bc: BroadcastChannel | undefined;
     try {
-      // @ts-ignore
-      if (typeof BroadcastChannel !== "undefined") {
-        // @ts-ignore
-        bc = new BroadcastChannel("ew-bids");
-        bc.onmessage = (ev: MessageEvent) => {
-          if (ev?.data?.type === "bid-updated") {
-            // simplest guaranteed refresh
-            if (typeof window !== 'undefined') window.location.reload();
-          }
-        };
-      }
-    } catch {}
-
-    const handler = (e: Event) => {
-      // Fallback custom event
-      if (typeof window !== 'undefined') window.location.reload();
-    };
-    if (typeof window !== 'undefined') {
-      window.addEventListener("ew-bids" as any, handler);
-      return () => {
-        window.removeEventListener("ew-bids" as any, handler);
+      bc = new BroadcastChannel("ew-bids");
+      bc.onmessage = (ev: MessageEvent) => {
+        if (ev?.data?.type === "bid-updated") {
+          window.location.reload();
+        }
       };
+    } catch (e) {
+      console.error("BroadcastChannel not available or error:", e);
     }
 
+    const handler = (e: Event) => {
+      window.location.reload();
+    };
+    window.addEventListener("ew-bids" as any, handler);
+
     return () => {
-      if (bc) try { bc.close(); } catch {}
-      if (typeof window !== 'undefined') {
-        window.removeEventListener("ew-bids" as any, handler);
-      }
+      if (bc) try { bc.close(); } catch (e) { console.error("Error closing BroadcastChannel:", e); }
+      window.removeEventListener("ew-bids" as any, handler);
     };
   }, []);
 
@@ -380,10 +371,12 @@ export default function ItemTable({
                   className="w-full"
                   onClick={() => {
                     if (!qrcodeDataURL) return;
-                    const a = document.createElement("a");
-                    a.href = qrcodeDataURL;
-                    a.download = `${selectedItemForQr._id}-qr.png`;
-                    a.click();
+                    if (typeof window !== 'undefined') {
+                      const a = document.createElement("a");
+                      a.href = qrcodeDataURL;
+                      a.download = `${selectedItemForQr._id}-qr.png`;
+                      a.click();
+                    }
                   }}
                 >
                   <Download className="w-4 h-4 mr-2" /> Download

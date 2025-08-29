@@ -10,11 +10,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { DotLottieReact } from '@lottiefiles/dotlottie-react'
+import { Suspense } from "react"
 
 export default function LoginPage() {
  return (
   <AuthProvider>
-   <LoginScreen />
+   <Suspense fallback={<div>Loading...</div>}>
+    <LoginScreen />
+   </Suspense>
   </AuthProvider>
  )
 }

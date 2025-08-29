@@ -15,6 +15,10 @@ import Link from "next/link"
 import type { EwItem, Vendor, Pickup } from "@/lib/types"
 import DashboardHeader from "@/components/dashboard-header"
 import DashboardTabNav from "@/components/dashboard-tab-nav"
+import dynamic from 'next/dynamic';
+
+const DynamicItemForm = dynamic(() => import('@/components/item-form'), { ssr: false });
+const DynamicItemTable = dynamic(() => import('@/components/item-table'), { ssr: false });
 
 // This is the main layout component for the Items page
 function ItemsPageLayout() {
@@ -66,6 +70,9 @@ function ItemsPageLayout() {
     if (isAuthenticated) {
       refreshData();
     }
+  }, [user, isAuthenticated, loading, router]);
+
+  useEffect(() => {
     if (typeof window !== 'undefined' && !bcRef.current) {
       bcRef.current = new BroadcastChannel('ew-items')
       bcRef.current.onmessage = (ev) => {
@@ -77,8 +84,7 @@ function ItemsPageLayout() {
     return () => {
       if (bcRef.current) bcRef.current.onmessage = null
     }
-  }, [user, isAuthenticated, loading, router]);
-
+  }, []); // Empty dependency array ensures this runs once on client mount
 
   // Handler functions to pass down to child components
   async function updateItem(updated: EwItem) {
@@ -169,8 +175,8 @@ function ItemsPageLayout() {
 
           <section id="items-management" className="pb-5 md:pb-6">
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-[0.38fr_0.62fr] xl:grid-cols-[0.35fr_0.65fr] items-start">
-              <ItemForm refreshItems={refreshData} user={user} />
-              <ItemTable items={items} vendors={vendors} onUpdate={updateItem} onScheduleQuick={schedulePickup} onDelete={deleteItem} />
+              <DynamicItemForm refreshItems={refreshData} user={user} />
+              <DynamicItemTable items={items} vendors={vendors} onUpdate={updateItem} onScheduleQuick={schedulePickup} onDelete={deleteItem} />
             </div>
           </section>
         </main>

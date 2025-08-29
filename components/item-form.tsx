@@ -127,6 +127,8 @@ export default function ItemForm({
 
  // --- Re-added AI image recognition handler ---
  async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+  if (typeof window === 'undefined') return; // Ensure this only runs on the client
+
   setAiError(null);
   setAiLoading(true);
   setAiSuggestions([]);
