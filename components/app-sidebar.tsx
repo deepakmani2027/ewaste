@@ -40,35 +40,27 @@ export function AppSidebar() {
   const sidebar = useSidebar()
 
   useEffect(() => {
-  const currentPath = typeof window !== 'undefined' ? pathname + window.location.hash : pathname
+    const currentPath = pathname + window.location.hash
     setActive(currentPath)
   }, [pathname])
 
   // Prevent sidebar from auto-opening on menu click
   const handleNavigation = (url: string) => {
-    // If navigating to a dashboard tab, use hash/event logic
-    if (url.startsWith("/dashboard") && url.split("/").length === 3 && url !== "/dashboard") {
-      if (pathname === "/dashboard") {
-        const key = url.split("/")[2];
-        if (typeof window !== 'undefined') {
-          window.location.hash = `#${key}`;
-          window.dispatchEvent(
-            new CustomEvent("ew:tab-changed", { detail: { activeTab: key } })
-          );
-        }
-        setActive(url);
-      } else {
-        router.push(url);
-        setActive(url);
-      }
+    if (!url.includes("#")) {
+      router.push(url)
     } else {
-      router.push(url);
-      setActive(url);
+      if (pathname !== "/dashboard") {
+        router.push(url)
+      } else {
+        const key = url.split("#")[1]
+        history.replaceState(null, "", `#${key}`)
+        window.dispatchEvent(
+          new CustomEvent("ew:tab-changed", { detail: { activeTab: key } }),
+        )
+      }
     }
-    setPressed(url);
-    if (typeof window !== 'undefined') {
-      window.setTimeout(() => setPressed(null), 450);
-    }
+    setPressed(url)
+    window.setTimeout(() => setPressed(null), 450)
     // Do NOT trigger sidebar.open or toggleSidebar here
   }
 
