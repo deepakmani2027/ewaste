@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    // After login, redirect to intended path if present
    const redirectPath = localStorage.getItem(REDIRECT_PATH_KEY);
    if (redirectPath) {
-    window.location.replace(redirectPath);
+  if (typeof window !== 'undefined') window.location.replace(redirectPath);
     localStorage.removeItem(REDIRECT_PATH_KEY);
    }
 

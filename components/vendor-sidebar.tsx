@@ -41,12 +41,12 @@ export function VendorSidebar() {
  const handleNavigation = (url: string) => {
   router.push(url);
   setPressed(url);
-  window.setTimeout(() => setPressed(null), 450);
+  if (typeof window !== 'undefined') window.setTimeout(() => setPressed(null), 450);
  }
   
   const handleLogout = () => {
     logout();
-    window.location.href = "/"; // Force a full page reload to the homepage
+  if (typeof window !== 'undefined') window.location.href = "/"; // Force a full page reload to the homepage
   }
 
  return (

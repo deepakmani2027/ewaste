@@ -40,7 +40,7 @@ export function AppSidebar() {
   const sidebar = useSidebar()
 
   useEffect(() => {
-    const currentPath = pathname + window.location.hash
+  const currentPath = typeof window !== 'undefined' ? pathname + window.location.hash : pathname
     setActive(currentPath)
   }, [pathname])
 
@@ -50,10 +50,12 @@ export function AppSidebar() {
     if (url.startsWith("/dashboard") && url.split("/").length === 3 && url !== "/dashboard") {
       if (pathname === "/dashboard") {
         const key = url.split("/")[2];
-        window.location.hash = `#${key}`;
-        window.dispatchEvent(
-          new CustomEvent("ew:tab-changed", { detail: { activeTab: key } })
-        );
+        if (typeof window !== 'undefined') {
+          window.location.hash = `#${key}`;
+          window.dispatchEvent(
+            new CustomEvent("ew:tab-changed", { detail: { activeTab: key } })
+          );
+        }
         setActive(url);
       } else {
         router.push(url);
@@ -64,7 +66,9 @@ export function AppSidebar() {
       setActive(url);
     }
     setPressed(url);
-    window.setTimeout(() => setPressed(null), 450);
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => setPressed(null), 450);
+    }
     // Do NOT trigger sidebar.open or toggleSidebar here
   }
 

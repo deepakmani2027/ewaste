@@ -28,7 +28,7 @@ export default function DashboardHeader() {
 
   const handleLogout = () => {
     logout();
-    window.location.href = "/";
+  if (typeof window !== 'undefined') window.location.href = "/";
   }
 
   return (

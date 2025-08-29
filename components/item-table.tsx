@@ -132,7 +132,7 @@ export default function ItemTable({
         bc.onmessage = (ev: MessageEvent) => {
           if (ev?.data?.type === "bid-updated") {
             // simplest guaranteed refresh
-            window.location.reload();
+            if (typeof window !== 'undefined') window.location.reload();
           }
         };
       }
@@ -140,13 +140,20 @@ export default function ItemTable({
 
     const handler = (e: Event) => {
       // Fallback custom event
-      window.location.reload();
+      if (typeof window !== 'undefined') window.location.reload();
     };
-    window.addEventListener("ew-bids" as any, handler);
+    if (typeof window !== 'undefined') {
+      window.addEventListener("ew-bids" as any, handler);
+      return () => {
+        window.removeEventListener("ew-bids" as any, handler);
+      };
+    }
 
     return () => {
       if (bc) try { bc.close(); } catch {}
-      window.removeEventListener("ew-bids" as any, handler);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener("ew-bids" as any, handler);
+      }
     };
   }, []);
 
@@ -160,6 +167,7 @@ export default function ItemTable({
 
   const handleEndAuction = async (item: EwItem) => {
     if (
+      typeof window !== 'undefined' && 
       window.confirm(
         `Are you sure you want to end the auction for "${item.name}"? This will finalize the winning bidder.`
       )
@@ -365,7 +373,9 @@ export default function ItemTable({
           {selectedItemForQr && (
             <div className="flex flex-col gap-5">
               <div className="flex flex-col items-center justify-center gap-3 self-center">
-                <Image src={qrcodeDataURL || ""} alt="QR Code" width={220} height={220} className="rounded-md border"/>
+                {qrcodeDataURL && (
+                  <Image src={qrcodeDataURL} alt="QR Code" width={220} height={220} className="rounded-md border"/>
+                )}
                 <Button
                   className="w-full"
                   onClick={() => {

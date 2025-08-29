@@ -47,17 +47,17 @@ export default function EwastePortal() {
     if (typeof window !== "undefined") {
       const h = window.location.hash.replace("#", "");
       if (isTabKey(h)) setTab(h as TabKey);
-    }
-    function onTabChanged(e: any) {
-      const detail = e.detail;
-      if (detail?.activeTab && isTabKey(detail.activeTab)) {
-        setTab(detail.activeTab);
+      function onTabChanged(e: any) {
+        const detail = e.detail;
+        if (detail?.activeTab && isTabKey(detail.activeTab)) {
+          setTab(detail.activeTab);
+        }
       }
+      window.addEventListener("ew:tab-changed", onTabChanged as any);
+      return () => {
+        window.removeEventListener("ew:tab-changed", onTabChanged as any);
+      };
     }
-    window.addEventListener("ew:tab-changed", onTabChanged as any);
-    return () => {
-      window.removeEventListener("ew:tab-changed", onTabChanged as any);
-    };
   }, []);
 
   async function refreshData() {
