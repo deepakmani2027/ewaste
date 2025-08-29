@@ -91,7 +91,9 @@ export default function VendorItemsPage() {
     } catch {}
     // Fallback custom event (same tab listeners)
     try {
-      window.dispatchEvent(new CustomEvent("ew-bids", { detail: { itemId: itemIdJustBid } }));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent("ew-bids", { detail: { itemId: itemIdJustBid } }));
+      }
     } catch {}
   };
 
