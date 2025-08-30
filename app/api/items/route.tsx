@@ -116,10 +116,18 @@ export async function GET(request: NextRequest) {
     await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const userEmail = searchParams.get('userEmail');
+    const id = searchParams.get('id');
 
-    const query = userEmail ? { createdBy: userEmail } : {};
+    if (id) {
+      const item = await Item.findById(id);
+      if (!item) {
+        return NextResponse.json({ message: 'Item not found.' }, { status: 404 });
+      }
+      return NextResponse.json(item, { status: 200 });
+    }
+
+    const query: any = userEmail ? { createdBy: userEmail } : {};
     const items = await Item.find(query).sort({ createdAt: -1 });
-
     return NextResponse.json(items, { status: 200 });
   } catch (error) {
     console.error('GET /api/items Error:', error);

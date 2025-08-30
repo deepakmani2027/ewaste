@@ -9,7 +9,7 @@ import type { EwItem, Vendor, Pickup } from "@/lib/types";
 
 // The API populates itemIds, so we need a type for the populated data
 interface PopulatedPickup extends Omit<Pickup, 'itemIds'> {
-  itemIds: Pick<EwItem, '_id' | 'name'>[];
+  itemIds: (Pick<EwItem, '_id' | 'name'> & { pickupAddress?: any })[];
   vendorName: string;
 }
 
@@ -64,13 +64,13 @@ export default function Scheduling() {
           p.itemIds.map(async (itemId) => {
             const itemRes = fetchedSchedulableItems.find(item => item._id === itemId);
             if (itemRes) {
-              return { _id: itemRes._id, name: itemRes.name };
+              return { _id: itemRes._id, name: itemRes.name, pickupAddress: (itemRes as any).pickupAddress };
             } else {
               try {
                 const response = await fetch(`/api/items?id=${itemId}`);
                 if (response.ok) {
                   const itemData = await response.json();
-                  return { _id: itemData._id, name: itemData.name };
+                  return { _id: itemData._id, name: itemData.name, pickupAddress: itemData.pickupAddress };
                 }
               } catch (e) {
                 console.warn(`Failed to fetch item details for ${itemId}:`, e);
@@ -186,25 +186,25 @@ function PickupCard({ pickup }: { pickup: PopulatedPickup }) {
                 </li>
               ))}
             </ul>
-            {/* Show pickup location from the first item's pickupAddress, fallback to pickup.address/landmark */}
+            {/* Show pickup.location: prefer pickup.address (copied at creation) fallback to first item's pickupAddress */}
             {(() => {
-              const firstItem = pickup.itemIds[0];
-              // @ts-ignore: pickupAddress may not be typed on item
-              const pickupAddress = firstItem && firstItem.pickupAddress;
-              if (pickupAddress && pickupAddress.address) {
-                return (
-                  <div className="mt-2 flex items-center gap-1 p-2 bg-purple-50 border border-purple-200 rounded shadow-sm text-xs">
-                    <MapPin size={14} className="text-purple-500" />
-                    <span className="font-medium text-purple-700">Pickup Location:</span>
-                    <span className="text-purple-800 font-normal">{pickupAddress.address}{pickupAddress.landmark ? ` (${pickupAddress.landmark})` : ''}</span>
-                  </div>
-                );
-              } else if (pickup.address) {
+              if (pickup.address) {
                 return (
                   <div className="mt-2 flex items-center gap-1 p-2 bg-purple-50 border border-purple-200 rounded shadow-sm text-xs">
                     <MapPin size={14} className="text-purple-500" />
                     <span className="font-medium text-purple-700">Pickup Location:</span>
                     <span className="text-purple-800 font-normal">{pickup.address}{pickup.landmark ? ` (${pickup.landmark})` : ''}</span>
+                  </div>
+                );
+              }
+              const firstItem: any = pickup.itemIds[0];
+              const pickupAddress = firstItem?.pickupAddress;
+              if (pickupAddress?.address) {
+                return (
+                  <div className="mt-2 flex items-center gap-1 p-2 bg-purple-50 border border-purple-200 rounded shadow-sm text-xs">
+                    <MapPin size={14} className="text-purple-500" />
+                    <span className="font-medium text-purple-700">Pickup Location:</span>
+                    <span className="text-purple-800 font-normal">{pickupAddress.address}{pickupAddress.landmark ? ` (${pickupAddress.landmark})` : ''}</span>
                   </div>
                 );
               }

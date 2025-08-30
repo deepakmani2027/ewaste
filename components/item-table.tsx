@@ -232,7 +232,8 @@ export default function ItemTable({
       const response = await fetch('/api/pickups/update-address', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId: itemForAddress._id, address, landmark: "", lat, lng }),
+        // Pass winning bidder as vendorId so a Pickup document can be created
+        body: JSON.stringify({ itemId: itemForAddress._id, address, landmark: "", lat, lng, vendorId: itemForAddress.winningBidderId }),
       });
 
       if (!response.ok) {

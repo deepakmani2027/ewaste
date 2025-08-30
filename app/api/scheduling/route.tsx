@@ -9,12 +9,18 @@ const VendorSchema = new mongoose.Schema({
 });
 
 
+// NOTE: Added address fields so pickup cards can display location without needing to look up item.pickupAddress
 const PickupSchema = new mongoose.Schema({
-    date: { type: String, required: true },
-    vendorId: { type: String, required: true },
-    itemIds: [{ type: String, required: true }],
-    notes: { type: String },
-    createdBy: { type: String, required: true, index: true },
+  date: { type: String, required: true },
+  vendorId: { type: String, required: true },
+  itemIds: [{ type: String, required: true }],
+  notes: { type: String },
+  createdBy: { type: String, required: true, index: true },
+  // Optional address meta copied from the item at the time address is provided
+  address: { type: String },
+  landmark: { type: String },
+  latitude: { type: Number },
+  longitude: { type: Number },
 }, { timestamps: true });
 
 
@@ -50,11 +56,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch vendors and items in parallel for efficiency
-    const [vendors, schedulableItems, pickups] = await Promise.all([
-        Vendor.find({}).sort({ name: 1 }),
-        Item.find({ createdBy: userEmail, status: "Reported" }).sort({ createdAt: -1 }),
-        Pickup.find({ createdBy: userEmail }).sort({ date: -1 })
-    ]);
+  const [vendors, schedulableItems, pickups] = await Promise.all([
+    Vendor.find({}).sort({ name: 1 }),
+    // Include both Reported (schedulable) and Scheduled (already assigned) for enrichment
+    Item.find({ createdBy: userEmail, status: { $in: ["Reported", "Scheduled"] } }).sort({ createdAt: -1 }),
+    Pickup.find({ createdBy: userEmail }).sort({ date: -1 })
+  ]);
 
     return NextResponse.json({ vendors, schedulableItems, pickups }, { status: 200 });
   } catch (error) {
@@ -74,8 +81,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Missing required fields: itemIds.' }, { status: 400 });
     }
 
-    // Create the new pickup document
-    const newPickup = new Pickup({ ...pickupData, itemIds });
+    // Attempt to derive address fields from first item if available
+    let addressFields: any = {};
+    try {
+      if (itemIds.length > 0) {
+        const first = await Item.findById(itemIds[0]);
+        if (first?.pickupAddress?.address) {
+          addressFields = {
+            address: first.pickupAddress.address,
+            landmark: first.pickupAddress.landmark,
+            latitude: first.pickupAddress.latitude,
+            longitude: first.pickupAddress.longitude,
+          };
+        }
+      }
+    } catch {}
+
+    // Create the new pickup document (with optional address)
+    const newPickup = new Pickup({ ...pickupData, itemIds, ...addressFields });
     await newPickup.save();
 
     // Update the status of all included items in the database
