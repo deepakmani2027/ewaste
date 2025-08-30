@@ -40,7 +40,8 @@ export default function EwastePortal() {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<TabKey>("items"); // Always safe for SSR
-  const { ref: kpiRef, visibleItems: visibleKpis } = useStaggeredAnimation(4, 100);
+  // Animation hook removed for KPI cards to ensure they always render immediately
+  const { ref: kpiRef } = { ref: undefined as any };
 
   // Set tab from hash on client only
   useEffect(() => {
@@ -206,25 +207,14 @@ export default function EwastePortal() {
           <section id="dashboard" className="p-4 md:p-6">
             {/* Namaste Banner */}
             <NamasteBanner />
-            <div 
-              ref={kpiRef as any}
-              className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4"
-            >
+            <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
               {[
                 { title: "Your Total Items", value: kpiStats.total, icon: <ScanLine className="w-5 h-5" />, gradient: "from-emerald-500 via-teal-500 to-purple-600" },
                 { title: "Hazardous Items", value: kpiStats.hazardousCount, icon: <Shield className="w-5 h-5" />, gradient: "from-rose-500 via-orange-500 to-amber-500" },
                 { title: "Recovery Rate", value: `${kpiStats.recoveryRate.toFixed(1)}%`, icon: <TrendingUp className="w-5 h-5" />, gradient: "from-fuchsia-500 via-purple-500 to-violet-500" },
                 { title: "Active Campaigns", value: kpiStats.activeCampaigns, icon: <Sparkles className="w-5 h-5" />, gradient: "from-lime-500 via-emerald-500 to-teal-500" }
-              ].map((kpi, index) => (
-                <div
-                  key={kpi.title}
-                  className={`transition-all duration-500 ease-out ${
-                    visibleKpis.includes(index)
-                      ? 'opacity-100 translate-y-0 scale-100'
-                      : 'opacity-0 translate-y-6 scale-95'
-                  }`}
-                  style={{ transitionDelay: `${index * 100}ms` }}
-                >
+              ].map(kpi => (
+                <div key={kpi.title} className="opacity-100 translate-y-0 scale-100">
                   <KpiCard title={kpi.title} value={kpi.value} icon={kpi.icon} gradient={kpi.gradient} />
                 </div>
               ))}

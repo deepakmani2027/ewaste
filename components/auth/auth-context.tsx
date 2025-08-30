@@ -26,7 +26,6 @@ type AuthContextType = {
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined)
 
 const AUTH_STORAGE_KEY = "ew:auth_token"
-const REDIRECT_PATH_KEY = "ew:redirect_path"
 
 const SECRET = new TextEncoder().encode(
  process.env.NEXT_PUBLIC_JWT_SECRET || "DEMO_ONLY_CHANGE_ME_32+_BYTES_SECRET_FOR_JWT_SIGNING_2025_EWASTE"
@@ -83,12 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    setToken(newToken);
    localStorage.setItem(AUTH_STORAGE_KEY, newToken);
 
-   // After login, redirect to intended path if present
-   const redirectPath = localStorage.getItem(REDIRECT_PATH_KEY);
-   if (redirectPath) {
-  if (typeof window !== 'undefined') window.location.replace(redirectPath);
-    localStorage.removeItem(REDIRECT_PATH_KEY);
-   }
+  // Unified post-login landing (ignore any stored redirect intents)
+  try { localStorage.removeItem('ew:redirect_path'); } catch {}
 
    return { ok: true as const, user: loggedInUser };
 

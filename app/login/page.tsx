@@ -37,7 +37,7 @@ function LoginScreen() {
       if (user.role === 'vendor') {
         router.replace("/vendors/dashboard");
       } else {
-        router.replace("/dashboard/items");
+        router.replace("/dashboard"); // unified dashboard landing
       }
    return;
   }
@@ -61,7 +61,7 @@ function LoginScreen() {
       if (res.user.role === 'vendor') {
         router.replace("/vendors/dashboard");
       } else {
-        router.replace("/dashboard/items");
+        router.replace("/dashboard"); // unified dashboard landing
       }
   } else {
    setError(res.message);

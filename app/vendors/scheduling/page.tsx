@@ -29,7 +29,7 @@ export default function SchedulingPageLayout() {
     if (!authLoading && !isAuthenticated) {
       router.replace("/login");
     } else if (!authLoading && user?.role !== 'vendor') {
-      router.replace("/dashboard/items"); // Redirect non-vendors
+  router.replace("/dashboard"); // Redirect non-vendors to main dashboard
     }
   }, [isAuthenticated, user, authLoading, router]);
 

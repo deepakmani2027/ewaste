@@ -15,11 +15,15 @@ export default function DashboardHeader() {
   const [headerWidth, setHeaderWidth] = useState('100vw');
 
   useEffect(() => {
-    // Sidebar width is 22rem (352px)
+    // Responsive header width that respects expanded and collapsed (icon) sidebar states
     if (isMobile) {
       setHeaderWidth('100vw');
     } else {
-      setHeaderWidth(open ? 'calc(100vw - 22rem)' : '100vw');
+      setHeaderWidth(
+        open
+          ? 'calc(100vw - var(--sidebar-width, 16rem))'
+          : 'calc(100vw - var(--sidebar-width-icon, 4rem))'
+      );
     }
   }, [open, isMobile]);
   const { user, logout } = useAuth()
@@ -41,8 +45,8 @@ export default function DashboardHeader() {
         margin: 0,
         padding: 0,
         width: headerWidth,
-        maxWidth: '96vw',
-        left: !isMobile && open ? '22rem' : '0',
+        maxWidth: '100vw',
+  left: !isMobile ? (open ? 'var(--sidebar-width, 16rem)' : 'var(--sidebar-width-icon, 4rem)') : '0',
         position: 'sticky',
         transition: 'width 0.3s, left 0.3s',
       }}

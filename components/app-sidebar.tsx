@@ -40,34 +40,21 @@ export function AppSidebar() {
   const sidebar = useSidebar()
 
   useEffect(() => {
-    const currentPath = pathname + window.location.hash
-    setActive(currentPath)
+    // Only rely on pathname (ignore hash) for active state
+    setActive(pathname)
   }, [pathname])
 
-  // Prevent sidebar from auto-opening on menu click
+  // Simple navigation without legacy hash/tab handling to prevent unintended redirects
   const handleNavigation = (url: string) => {
-    if (!url.includes("#")) {
-      router.push(url)
-    } else {
-      if (pathname !== "/dashboard") {
-        router.push(url)
-      } else {
-        const key = url.split("#")[1]
-        history.replaceState(null, "", `#${key}`)
-        window.dispatchEvent(
-          new CustomEvent("ew:tab-changed", { detail: { activeTab: key } }),
-        )
-      }
-    }
+    router.push(url)
     setPressed(url)
-    window.setTimeout(() => setPressed(null), 450)
-    // Do NOT trigger sidebar.open or toggleSidebar here
+    if (typeof window !== 'undefined') window.setTimeout(() => setPressed(null), 450)
   }
 
   return (
     <Sidebar collapsible="icon" className="border-r">
       {/* Header */}
-      <SidebarHeader className="py-4 pl-8">
+      <SidebarHeader className="mt-12">
         <SidebarGroup>
           <SidebarGroupLabel
             className={`text-2xl font-extrabold tracking-wide pl-7 ${styles.gradientText}`}
@@ -76,14 +63,13 @@ export function AppSidebar() {
           </SidebarGroupLabel>
         </SidebarGroup>
       </SidebarHeader>
-      <hr />
 
       {/* Main menu */}
       <SidebarContent className="flex-1">
         <SidebarMenu className="gap-3 px-2 mt-4">
           {items.map((item, index) => {   {/* ✅ FIX: Added index here */}
             const Icon = item.icon
-            const isActive = active === item.url
+            const isActive = active === item.url || (item.url !== '/dashboard' && active.startsWith(item.url))
             const isPressed = pressed === item.url
             return (
               <SidebarMenuItem key={item.title} className={`relative ${index > 0 ? "mt-3" : ""}`}>
@@ -99,13 +85,10 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild tooltip={item.title}>
                   <Link
                     href={item.url}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      handleNavigation(item.url)
-                    }}
+                    onClick={(e) => { /* direct route navigation only */ handleNavigation(item.url) }}
                     className={[
                       // Base - increased padding for better spacing
-                      "relative w-full rounded-r-xl rounded-l-sm transition-all duration-200 py-8 px-7 mr-2",
+                      "relative w-full rounded-r-xl rounded-l-sm transition-all duration-200 py-8 px-4 mr-2",
                       // Remove hovers
                       "hover:!bg-transparent hover:!text-foreground dark:hover:!text-foreground",
                       // Active tint

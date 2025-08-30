@@ -25,7 +25,7 @@ function VendorPortalLayout({ children }: { children: React.ReactNode }) {
     } else if (user?.role !== 'vendor') {
       // If logged in but NOT a vendor, send to the main user dashboard
       alert("Access Denied: This area is for vendors only.");
-      router.replace("/dashboard/items"); 
+  router.replace("/dashboard"); 
     }
   }, [isAuthenticated, user, authLoading, router]);
 

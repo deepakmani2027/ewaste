@@ -64,8 +64,8 @@ export default function DashboardCampaignsPage() {
    return;
   }
 
-  if (!isAuthenticated && !authLoading) {
-    router.replace("/login");
+  if (!authLoading && !isAuthenticated) {
+    router.replace('/login');
     return;
   }
 
@@ -218,7 +218,7 @@ export default function DashboardCampaignsPage() {
     }, [isAuthenticated, user?.email]);
 
 
- if (authLoading || loading) {
+ if (authLoading || (!isAuthenticated && !authLoading) || loading) {
  return (
  <div className="flex items-center justify-center h-screen bg-gray-50">
   <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
