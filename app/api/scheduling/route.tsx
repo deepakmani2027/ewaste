@@ -70,12 +70,39 @@ export async function GET(request: NextRequest) {
     const vendorMap = new Map(vendors.map((v: any) => [String(v._id), v]));
     const itemMap = new Map(schedulableItems.map((i: any) => [String(i._id), i]));
 
+    // Collect vendorIds that weren't found in Vendor collection
+    const missingVendorIds = new Set<string>();
+    pickups.forEach((p: any) => {
+      if (!vendorMap.has(String(p.vendorId))) missingVendorIds.add(String(p.vendorId));
+    });
+
+    // If there are missing vendors, try fetching them from the Users collection (role vendor/admin)
+    let userVendors: Record<string, any> = {};
+    if (missingVendorIds.size > 0) {
+      try {
+        // Dynamically define User model (avoid import cycles) only if needed
+        const UserSchema = new mongoose.Schema({
+          name: String,
+          email: String,
+          password: String,
+          role: String,
+          contact: String,
+          certified: Boolean,
+        }, { timestamps: true });
+        const User = mongoose.models.User || mongoose.model('User', UserSchema);
+        const foundUsers = await User.find({ _id: { $in: Array.from(missingVendorIds) }, role: { $in: ['vendor', 'admin'] } }).select('name');
+        foundUsers.forEach((u: any) => { userVendors[String(u._id)] = u; });
+      } catch (e) {
+        console.warn('Scheduling vendor fallback user lookup failed:', e);
+      }
+    }
+
     const populatedPickups = pickups.map((p: any) => {
       const items = (p.itemIds || []).map((id: string) => {
         const it = itemMap.get(String(id));
         return it ? { _id: String(it._id), name: it.name, pickupAddress: it.pickupAddress } : { _id: String(id), name: 'Unknown Item' };
       });
-      const vendor = vendorMap.get(String(p.vendorId));
+      const vendor = vendorMap.get(String(p.vendorId)) || userVendors[String(p.vendorId)];
       return {
         ...p,
         vendorName: vendor ? vendor.name : 'Unknown Vendor',
