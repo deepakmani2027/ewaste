@@ -24,7 +24,7 @@ const features = [
     icon: (
       <img src="https://img.freepik.com/premium-vector/vector-illustration-delivery-icon-with-pickup-truck-suitable-fast-delivery_414847-512.jpg" alt="Schedule Pickup Logo" width={36} height={100} style={{borderRadius:'8px',boxShadow:'0 2px 8px #0001',objectFit:'cover'}} />
     ),
-    title: "Schedule Pickups",
+  title: "Schedules",
     desc: "Book convenient pickup slots for your e-waste and let us handle the rest."
   },
   {

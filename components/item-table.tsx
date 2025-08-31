@@ -332,9 +332,14 @@ export default function ItemTable({
                           </Button>
                         )}
                         {it.biddingStatus === 'closed' && it.winningBidderId && it.status === 'Reported' && (
-                          <Button variant="secondary" size="sm" onClick={() => quickSchedule(it)}>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            disabled
+                            className="cursor-default opacity-80"
+                          >
                             <CalendarDays className="w-4 h-4 mr-2"/>
-                            Schedule Pickup
+                            Schedules
                           </Button>
                         )}
                         <Button
