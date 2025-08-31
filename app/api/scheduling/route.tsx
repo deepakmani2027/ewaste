@@ -144,8 +144,16 @@ export async function POST(request: NextRequest) {
       }
     } catch {}
 
-    // Create the new pickup document (with optional address)
-    const newPickup = new Pickup({ ...pickupData, itemIds, ...addressFields });
+  // Standardize date: always set to local date + offset (default 3 days) to avoid UTC slice issues.
+  const offsetDays = parseInt(process.env.PICKUP_OFFSET_DAYS || '3', 10);
+  const target = new Date();
+  target.setDate(target.getDate() + offsetDays);
+  const yyyy = target.getFullYear();
+  const mm = String(target.getMonth() + 1).padStart(2, '0');
+  const dd = String(target.getDate()).padStart(2, '0');
+  const standardizedDate = `${yyyy}-${mm}-${dd}`;
+  // Create the new pickup document (with optional address)
+  const newPickup = new Pickup({ ...pickupData, date: standardizedDate, itemIds, ...addressFields });
     await newPickup.save();
 
     // Update the status of all included items in the database

@@ -56,8 +56,16 @@ export async function POST(req: NextRequest) {
     if (vendorId && typeof vendorId === 'string') {
       const existingPickup = await Pickup.findOne({ itemIds: itemId });
       if (!existingPickup) {
+        // Align pickup date with quick scheduling logic: default +3 days (configurable via env)
+  const offsetDays = parseInt(process.env.PICKUP_OFFSET_DAYS || '3', 10);
+  const target = new Date();
+  target.setDate(target.getDate() + offsetDays);
+  const yyyy = target.getFullYear();
+  const mm = String(target.getMonth() + 1).padStart(2, '0');
+  const dd = String(target.getDate()).padStart(2, '0');
+  const scheduledDate = `${yyyy}-${mm}-${dd}`;
         const newPickup = new Pickup({
-          date: new Date().toISOString().slice(0, 10),
+          date: scheduledDate,
           vendorId,
           itemIds: [itemId],
           notes: 'Pickup for auction winner (address provided).',
