@@ -63,7 +63,8 @@ export async function GET(request: NextRequest) {
             .sort({ createdAt: -1 })
             .select('_id name pickupAddress status createdBy')
             .lean(),
-        Pickup.find({ createdBy: userEmail }).sort({ date: -1 }).lean()
+  // Sort pickups so the most recently created appears first (ensures newly scheduled pickup shows at top)
+  Pickup.find({ createdBy: userEmail }).sort({ createdAt: -1 }).lean()
     ]);
 
     // Build maps for quick lookup
@@ -143,6 +144,13 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch {}
+
+    // If a pickup already exists for ANY of these itemIds, return that instead of creating a duplicate.
+    // This prevents the UI from showing two nearly identical history cards (e.g. one from address update + one from manual scheduling).
+    const existing = await Pickup.findOne({ itemIds: { $in: itemIds } }).lean();
+    if (existing) {
+      return NextResponse.json(existing, { status: 200 });
+    }
 
   // Standardize date: always set to local date + offset (default 3 days) to avoid UTC slice issues.
   const offsetDays = parseInt(process.env.PICKUP_OFFSET_DAYS || '3', 10);

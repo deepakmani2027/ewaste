@@ -64,11 +64,15 @@ export async function POST(req: NextRequest) {
   const mm = String(target.getMonth() + 1).padStart(2, '0');
   const dd = String(target.getDate()).padStart(2, '0');
   const scheduledDate = `${yyyy}-${mm}-${dd}`;
+        const finalBid = (item as any).currentHighestBid;
+        const noteBase = typeof finalBid === 'number' && finalBid > 0
+          ? `Pickup for auction winner. Final bid: ₹${finalBid}`
+          : 'Pickup for auction winner.';
         const newPickup = new Pickup({
           date: scheduledDate,
           vendorId,
           itemIds: [itemId],
-          notes: 'Pickup for auction winner (address provided).',
+          notes: noteBase,
           createdBy: item.createdBy,
           address,
           landmark: item.pickupAddress?.landmark,
