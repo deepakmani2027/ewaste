@@ -1,7 +1,5 @@
 "use client"
-import { useAuth } from "@/components/auth/auth-context";
-import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import "@/styles/chatbot.css";
 
 // Fix for window.chtlConfig type
@@ -12,28 +10,32 @@ declare global {
 }
 
 export default function ChatbotScript() {
-	const { isAuthenticated, loading } = useAuth();
-	const pathname = usePathname();
+	const mountedRef = useRef(false);
 
 	useEffect(() => {
-		// Only inject script if authenticated and not on login page
-		if (typeof window !== "undefined" && isAuthenticated && !loading && pathname !== "/login") {
-			if (!document.getElementById("chtl-script")) {
-				window.chtlConfig = { chatbotId: "2984257689" };
-				const script = document.createElement("script");
-				script.async = true;
-				script.setAttribute("data-id", "2984257689");
-				script.id = "chtl-script";
-				script.type = "text/javascript";
-				script.src = "https://chatling.ai/js/embed.js";
-				document.body.appendChild(script);
-			}
-		} else {
-			// Remove script if not authenticated or on login page
-			const existing = document.getElementById("chtl-script");
-			if (existing) existing.remove();
+		if (mountedRef.current) return; // ensure single injection
+		if (typeof window === 'undefined') return;
+
+		const CHATBOT_ID = process.env.NEXT_PUBLIC_CHATBOT_ID || '2984257689';
+		// Fallback inline style in case global stylesheet not yet applied
+		if (!document.querySelector('style[data-chatbot-inline]')) {
+			const style = document.createElement('style');
+			style.dataset.chatbotInline = 'true';
+			style.textContent = `#chtl-widget-frame{right:24px!important;bottom:24px!important;position:fixed!important;z-index:2147483647!important}#chtl-launcher{right:32px!important;bottom:32px!important;position:fixed!important;z-index:2147483647!important}`;
+			document.head.appendChild(style);
 		}
-	}, [isAuthenticated, loading, pathname]);
+		if (!document.getElementById('chtl-script')) {
+			window.chtlConfig = { chatbotId: CHATBOT_ID };
+			const script = document.createElement('script');
+			script.async = true;
+			script.id = 'chtl-script';
+			script.type = 'text/javascript';
+			script.setAttribute('data-id', CHATBOT_ID);
+			script.src = 'https://chatling.ai/js/embed.js';
+			document.body.appendChild(script);
+		}
+		mountedRef.current = true;
+	}, []);
 
 	return null;
 }
