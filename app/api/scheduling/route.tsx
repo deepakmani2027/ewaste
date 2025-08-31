@@ -56,14 +56,34 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch vendors and items in parallel for efficiency
-  const [vendors, schedulableItems, pickups] = await Promise.all([
-    Vendor.find({}).sort({ name: 1 }),
-    // Include both Reported (schedulable) and Scheduled (already assigned) for enrichment
-    Item.find({ createdBy: userEmail, status: { $in: ["Reported", "Scheduled"] } }).sort({ createdAt: -1 }),
-    Pickup.find({ createdBy: userEmail }).sort({ date: -1 })
-  ]);
+    const [vendors, schedulableItems, pickups] = await Promise.all([
+        Vendor.find({}).sort({ name: 1 }).lean(),
+        // Include both Reported (schedulable) and Scheduled (already assigned) for enrichment
+        Item.find({ createdBy: userEmail, status: { $in: ["Reported", "Scheduled"] } })
+            .sort({ createdAt: -1 })
+            .select('_id name pickupAddress status createdBy')
+            .lean(),
+        Pickup.find({ createdBy: userEmail }).sort({ date: -1 }).lean()
+    ]);
 
-    return NextResponse.json({ vendors, schedulableItems, pickups }, { status: 200 });
+    // Build maps for quick lookup
+    const vendorMap = new Map(vendors.map((v: any) => [String(v._id), v]));
+    const itemMap = new Map(schedulableItems.map((i: any) => [String(i._id), i]));
+
+    const populatedPickups = pickups.map((p: any) => {
+      const items = (p.itemIds || []).map((id: string) => {
+        const it = itemMap.get(String(id));
+        return it ? { _id: String(it._id), name: it.name, pickupAddress: it.pickupAddress } : { _id: String(id), name: 'Unknown Item' };
+      });
+      const vendor = vendorMap.get(String(p.vendorId));
+      return {
+        ...p,
+        vendorName: vendor ? vendor.name : 'Unknown Vendor',
+        itemIds: items,
+      };
+    });
+
+    return NextResponse.json({ vendors, schedulableItems, pickups, populatedPickups }, { status: 200 });
   } catch (error) {
     console.error('GET /api/scheduling Error:', error);
     return NextResponse.json({ message: 'An internal server error occurred.' }, { status: 500 });

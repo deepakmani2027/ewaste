@@ -1,15 +1,15 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CalendarX, Package, MapPin, AlertTriangle, Loader2 } from 'lucide-react'
 import { useAuth } from "./auth/auth-context"
-import type { EwItem, Vendor, Pickup } from "@/lib/types";
+import type { Pickup, Vendor } from "@/lib/types";
 
 // The API populates itemIds, so we need a type for the populated data
 interface PopulatedPickup extends Omit<Pickup, 'itemIds'> {
-  itemIds: (Pick<EwItem, '_id' | 'name'> & { pickupAddress?: any })[];
+  itemIds: { _id: string; name: string; pickupAddress?: any }[];
   vendorName: string;
 }
 
@@ -17,7 +17,7 @@ interface PopulatedPickup extends Omit<Pickup, 'itemIds'> {
 export default function Scheduling() {
  const { user, isAuthenticated, loading: authLoading } = useAuth();
  const [pickups, setPickups] = useState<PopulatedPickup[]>([]);
-  const [vendors, setVendors] = useState<Vendor[]>([]);
+   const [vendors, setVendors] = useState<Vendor[]>([]); // kept for potential future use/display
  const [loading, setLoading] = useState(true);
  const [error, setError] = useState<string | null>(null);
 
@@ -34,62 +34,11 @@ export default function Scheduling() {
     if (!response.ok) {
      throw new Error("Failed to load scheduling data.");
     }
-    const data = await response.json();
-    const fetchedPickups: Pickup[] = data.pickups || [];
-    const fetchedVendors: Vendor[] = data.vendors || [];
-    const fetchedSchedulableItems: EwItem[] = data.schedulableItems || [];
-
-    const populatedPickups: PopulatedPickup[] = await Promise.all(
-      fetchedPickups.map(async (p: Pickup) => {
-        let vendorName = "Unknown Vendor";
-        const vendorFromList = fetchedVendors.find(v => v._id === p.vendorId);
-        if (vendorFromList) {
-          vendorName = vendorFromList.name;
-        } else {
-          // Fallback: if not in general vendors list, try fetching from users API
-          try {
-            const userRes = await fetch(`/api/users?id=${p.vendorId}`);
-            if (userRes.ok) {
-              const userData = await userRes.json();
-              if (userData && (userData.role === 'vendor' || userData.role === 'admin')) {
-                vendorName = userData.name;
-              }
-            }
-          } catch (e) {
-            console.error("Error fetching vendor name from users API:", e);
-          }
-        }
-
-        const detailedItems = await Promise.all(
-          p.itemIds.map(async (itemId) => {
-            const itemRes = fetchedSchedulableItems.find(item => item._id === itemId);
-            if (itemRes) {
-              return { _id: itemRes._id, name: itemRes.name, pickupAddress: (itemRes as any).pickupAddress };
-            } else {
-              try {
-                const response = await fetch(`/api/items?id=${itemId}`);
-                if (response.ok) {
-                  const itemData = await response.json();
-                  return { _id: itemData._id, name: itemData.name, pickupAddress: itemData.pickupAddress };
-                }
-              } catch (e) {
-                console.warn(`Failed to fetch item details for ${itemId}:`, e);
-              }
-              return { _id: itemId, name: "Unknown Item" };
-            }
-          })
-        );
-
-        return {
-          ...p,
-          vendorName,
-          itemIds: detailedItems,
-        };
-      })
-    );
-
-    setPickups(populatedPickups);
-    setVendors(fetchedVendors);
+  const data = await response.json();
+  // Prefer server-side populated list for performance; fallback if absent
+  const populated = data.populatedPickups || [];
+  setPickups(populated);
+  setVendors(data.vendors || []);
    } catch (err: any) {
     setError(err.message);
    } finally {
