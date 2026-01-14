@@ -61,7 +61,7 @@
     "mongodb": "^6.18.0",
     "mongoose": "^8.17.1",
     "net": "^1.0.2",
-    "next": "15.2.4",
+    "next": "15.2.8",
     "next-auth": "^4.24.11",
     "next-themes": "latest",
     "nodemailer": "^7.0.5",
